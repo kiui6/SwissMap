@@ -301,7 +301,69 @@ public:
     }
 
     inline Slot* Insert(const K&  key, const V& value) {
-        return Emplace(key, value);
+        const uint64_t hash = _FlatHashMapHash<HashFunction, K>::operator()(key);
+        const uint8_t h2 = hash & 0x7F;
+        size_t idx = ((hash >> 7) & (m_capacity - 1)) & ~15;
+
+        const simd128i vecEmpty = simdSet128i((char)0x80);
+        const simd128i vecDeleted = simdSet128i((char)0xFE);
+        const simd128i vecH2 = simdSet128i((char)h2);
+
+        size_t firstTombstone = (size_t)-1;
+
+        while (true) {
+            const simd128i metadata = simdLoad128i((const simd128i*)&m_metadata[idx]);
+
+            const simd128i cmp = simdCmpEq8(metadata, vecH2);
+            uint16_t matchMask = simdMovemask8(cmp);
+
+            const simd128i cmpEmpty = simdCmpEq8(metadata, vecEmpty);
+            uint16_t emptyMask = simdMovemask8(cmpEmpty);
+            if (emptyMask) {
+                matchMask &= (emptyMask - 1);
+            }
+
+            while (matchMask) {
+                const uint16_t bit = std::countr_zero(matchMask);
+                const size_t slot_idx = (idx + bit) & (m_capacity - 1);
+                if (m_slots[slot_idx].first == key) {
+                    return nullptr;
+                }
+                matchMask &= matchMask - 1;
+            }
+
+            if (firstTombstone == (size_t)-1) {
+                const simd128i cmpDeleted = simdCmpEq8(metadata, vecDeleted);
+                const uint16_t deletedMask = simdMovemask8(cmpDeleted);
+                if(deletedMask) {
+                    uint16_t firstDeletedBit = std::countr_zero(deletedMask);
+                    firstTombstone = idx + firstDeletedBit;
+                }
+            }
+
+            if (emptyMask) {
+                if (firstTombstone != (size_t)-1) {
+                    new (&m_slots[firstTombstone]) Slot{key, value};
+                    m_metadata[firstTombstone] = h2;
+    
+                    m_occupied++;
+                    return &m_slots[firstTombstone];
+                } else {
+                    const uint16_t bit = std::countr_zero(emptyMask);
+                    const size_t slot_idx = (idx + bit) & (m_capacity - 1);
+    
+                    new (&m_slots[slot_idx]) Slot{key, value};
+                    m_metadata[slot_idx] = h2;
+    
+                    m_occupied++;
+                    return &m_slots[slot_idx];
+                }
+            }
+
+            idx = (idx + 16) & (m_capacity - 1);
+        }
+
+        return nullptr;
     }
 
     template <class _VTy>
@@ -360,6 +422,16 @@ public:
         m_occupied--;
     }
 
+    inline Iterator Erase(const Iterator& it) {
+        if (!it) return it;
+
+        size_t idx = it.m_index;
+        m_slots[idx]->~Slot();
+        m_metadata[idx] = 0xFE;
+        m_occupied--;
+        return Iterator(m_capacity, m_slots, m_metadata, ++idx);
+    }
+
     void Clear() {
         _DestroyAll();
 
@@ -369,8 +441,8 @@ public:
         }
     }
 
-    V* operator[](const K& key) { return find(key); }
-    const V* operator[](const K& key) const { return find(key); }
+    V& operator[](const K& key) { return find(key)->second; }
+    const V& operator[](const K& key) const { return find(key)->second; }
 
     inline Iterator begin() {return Iterator(m_capacity, m_slots, m_metadata, 0);}
     inline Iterator end() {return Iterator(m_capacity, m_slots, m_metadata, m_capacity);}
@@ -416,10 +488,10 @@ protected:
                 matchMask &= matchMask - 1;
             }
 
-            const simd128i cmpDeleted = simdCmpEq8(metadata, vecDeleted);
-            const uint16_t deletedMask = simdMovemask8(cmpDeleted);
-            if(deletedMask) {
-                if (firstTombstone == (size_t)-1) {
+            if (firstTombstone == (size_t)-1) {
+                const simd128i cmpDeleted = simdCmpEq8(metadata, vecDeleted);
+                const uint16_t deletedMask = simdMovemask8(cmpDeleted);
+                if(deletedMask) {
                     uint16_t firstDeletedBit = std::countr_zero(deletedMask);
                     firstTombstone = idx + firstDeletedBit;
                 }

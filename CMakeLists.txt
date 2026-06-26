@@ -12,5 +12,6 @@ target_include_directories(FlatHashMap INTERFACE
 target_compile_features(FlatHashMap INTERFACE cxx_std_20)
 
 if(ENABLE_TESTS)
+    message(STATUS "Tests enabled")
     add_subdirectory(tests)
 endif()
