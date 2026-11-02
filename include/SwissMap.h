@@ -320,20 +320,20 @@ namespace ki {
             const uint8_t h2 = hash & 0x7F;
             size_t idx = ((hash >> 7) & (m_capacity - 1)) & ~15;
 
-            const simd128i vecEmpty = simdSet128i((char)0x80);
-            const simd128i vecDeleted = simdSet128i((char)0xFE);
-            const simd128i vecH2 = simdSet128i((char)h2);
+            const simd128i vecEmpty = ki::simdSet128i((char)0x80);
+            const simd128i vecDeleted = ki::simdSet128i((char)0xFE);
+            const simd128i vecH2 = ki::simdSet128i((char)h2);
 
             size_t firstTombstone = (size_t)-1;
 
             while (true) {
-                const simd128i metadata = simdLoad128i((const simd128i*)&m_metadata[idx]);
+                const simd128i metadata = ki::simdLoad128i((const simd128i*)&m_metadata[idx]);
 
-                const simd128i cmp = simdCmpEq8(metadata, vecH2);
-                uint16_t matchMask = simdMovemask8(cmp);
+                const simd128i cmp = ki::simdCmpEq8(metadata, vecH2);
+                uint16_t matchMask = ki::simdMovemask8(cmp);
 
-                const simd128i cmpEmpty = simdCmpEq8(metadata, vecEmpty);
-                uint16_t emptyMask = simdMovemask8(cmpEmpty);
+                const simd128i cmpEmpty = ki::simdCmpEq8(metadata, vecEmpty);
+                uint16_t emptyMask = ki::simdMovemask8(cmpEmpty);
                 if (emptyMask) {
                     matchMask &= (emptyMask - 1);
                 }
@@ -348,8 +348,8 @@ namespace ki {
                 }
 
                 if (firstTombstone == (size_t)-1) {
-                    const simd128i cmpDeleted = simdCmpEq8(metadata, vecDeleted);
-                    const uint16_t deletedMask = simdMovemask8(cmpDeleted);
+                    const simd128i cmpDeleted = ki::simdCmpEq8(metadata, vecDeleted);
+                    const uint16_t deletedMask = ki::simdMovemask8(cmpDeleted);
                     if(deletedMask) {
                         uint16_t firstDeletedBit = std::countr_zero(deletedMask);
                         firstTombstone = idx + firstDeletedBit;
@@ -395,13 +395,13 @@ namespace ki {
             const uint8_t h2 = hash & 0x7F;
             size_t idx = ((hash >> 7) & (m_capacity - 1)) & ~15;
 
-            const simd128i vecH2 = simdSet128i((char)h2);
-            const simd128i vecEmpty = simdSet128i((char)0x80);
+            const simd128i vecH2 = ki::simdSet128i((char)h2);
+            const simd128i vecEmpty = ki::simdSet128i((char)0x80);
 
             while(true) {
-                simd128i metadata = simdLoad128i((const simd128i*)&m_metadata[idx]);
-                simd128i cmp = simdCmpEq8(metadata, vecH2);
-                uint16_t mask = simdMovemask8(cmp);
+                simd128i metadata = ki::simdLoad128i((const simd128i*)&m_metadata[idx]);
+                simd128i cmp = ki::simdCmpEq8(metadata, vecH2);
+                uint16_t mask = ki::simdMovemask8(cmp);
 
                 while(mask) {
                     uint16_t bit = std::countr_zero(mask);
@@ -414,8 +414,8 @@ namespace ki {
                     mask &= mask - 1;
                 }
 
-                simd128i cmpEmpty = simdCmpEq8(metadata, vecEmpty);
-                int emptyMask = simdMovemask8(cmpEmpty);
+                simd128i cmpEmpty = ki::simdCmpEq8(metadata, vecEmpty);
+                int emptyMask = ki::simdMovemask8(cmpEmpty);
                 
                 if (!emptyMask) {
                     idx = (idx + 16) & (m_capacity - 1);
@@ -450,7 +450,7 @@ namespace ki {
         void Clear() {
             _DestroyAll();
 
-            simd128i empty = simdSet128i(0x80);
+            simd128i empty = ki::simdSet128i(0x80);
             for (size_t i = 0; i < m_capacity; i += 16) {
                 _mm_store_si128((simd128i*)&m_metadata[i], empty);
             }
@@ -475,20 +475,20 @@ namespace ki {
             const uint8_t h2 = hash & 0x7F;
             size_t idx = ((hash >> 7) & (m_capacity - 1)) & ~15;
 
-            const simd128i vecEmpty = simdSet128i((char)0x80);
-            const simd128i vecDeleted = simdSet128i((char)0xFE);
-            const simd128i vecH2 = simdSet128i((char)h2);
+            const simd128i vecEmpty = ki::simdSet128i((char)0x80);
+            const simd128i vecDeleted = ki::simdSet128i((char)0xFE);
+            const simd128i vecH2 = ki::simdSet128i((char)h2);
 
             size_t firstTombstone = (size_t)-1;
 
             while (true) {
-                const simd128i metadata = simdLoad128i((const simd128i*)&m_metadata[idx]);
+                const simd128i metadata = ki::simdLoad128i((const simd128i*)&m_metadata[idx]);
 
-                const simd128i cmp = simdCmpEq8(metadata, vecH2);
-                uint16_t matchMask = simdMovemask8(cmp);
+                const simd128i cmp = ki::simdCmpEq8(metadata, vecH2);
+                uint16_t matchMask = ki::simdMovemask8(cmp);
 
-                const simd128i cmpEmpty = simdCmpEq8(metadata, vecEmpty);
-                uint16_t emptyMask = simdMovemask8(cmpEmpty);
+                const simd128i cmpEmpty = ki::simdCmpEq8(metadata, vecEmpty);
+                uint16_t emptyMask = ki::simdMovemask8(cmpEmpty);
                 if (emptyMask) {
                     matchMask &= (emptyMask - 1);
                 }
@@ -504,8 +504,8 @@ namespace ki {
                 }
 
                 if (firstTombstone == (size_t)-1) {
-                    const simd128i cmpDeleted = simdCmpEq8(metadata, vecDeleted);
-                    const uint16_t deletedMask = simdMovemask8(cmpDeleted);
+                    const simd128i cmpDeleted = ki::simdCmpEq8(metadata, vecDeleted);
+                    const uint16_t deletedMask = ki::simdMovemask8(cmpDeleted);
                     if(deletedMask) {
                         uint16_t firstDeletedBit = std::countr_zero(deletedMask);
                         firstTombstone = idx + firstDeletedBit;
@@ -542,13 +542,13 @@ namespace ki {
             const uint8_t h2 = hash & 0x7F;
             size_t idx = ((hash >> 7) & (m_capacity - 1)) & ~15;
 
-            const simd128i vecH2 = simdSet128i((char)h2);
-            const simd128i vecEmpty = simdSet128i((char)0x80);
+            const simd128i vecH2 = ki::simdSet128i((char)h2);
+            const simd128i vecEmpty = ki::simdSet128i((char)0x80);
 
             while(true) {
-                simd128i metadata = simdLoad128i((const simd128i*)&m_metadata[idx]);
-                simd128i cmp = simdCmpEq8(metadata, vecH2);
-                uint16_t mask = simdMovemask8(cmp);
+                simd128i metadata = ki::simdLoad128i((const simd128i*)&m_metadata[idx]);
+                simd128i cmp = ki::simdCmpEq8(metadata, vecH2);
+                uint16_t mask = ki::simdMovemask8(cmp);
 
                 while(mask) {
                     uint16_t bit = std::countr_zero(mask);
@@ -561,8 +561,8 @@ namespace ki {
                     mask &= mask - 1;
                 }
 
-                simd128i cmpEmpty = simdCmpEq8(metadata, vecEmpty);
-                int emptyMask = simdMovemask8(cmpEmpty);
+                simd128i cmpEmpty = ki::simdCmpEq8(metadata, vecEmpty);
+                int emptyMask = ki::simdMovemask8(cmpEmpty);
                 
                 if (!emptyMask) {
                     idx = (idx + 16) & (m_capacity - 1);
