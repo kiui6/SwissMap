@@ -6,5 +6,5 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(doctest)
 
-add_executable(FlatHashMapTests main.cpp)
-target_link_libraries(FlatHashMapTests PRIVATE doctest FlatHashMap)
+add_executable(SwissMapTests main.cpp)
+target_link_libraries(SwissMapTests PRIVATE doctest SwissMap)

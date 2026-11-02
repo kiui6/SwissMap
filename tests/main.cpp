@@ -1,9 +1,9 @@
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include <doctest/doctest.h>
-#include "FlatHashMap.h"
+#include "SwissMap.h"
 
-TEST_CASE("FlatHashMap inserts and finds correctly") {
-    FlatHashMap<int, int> map;
+TEST_CASE("SwissMap inserts and finds correctly") {
+    ki::swiss_map<int, int> map;
     
     SUBCASE("Inserting a new key returns true") {
         auto pair = map.Emplace(42, 100);
@@ -24,8 +24,8 @@ TEST_CASE("FlatHashMap inserts and finds correctly") {
     }
 }
 
-TEST_CASE("FlatHashMap handles rehash gracefully") {
-    FlatHashMap<int, int> map;
+TEST_CASE("SwissMap handles rehash gracefully") {
+    ki::swiss_map<int, int> map;
     for (int i = 0; i < 100000; ++i) {
         auto* Pair = map.Emplace(i, i * 2);
         CHECK(Pair != nullptr);
@@ -38,8 +38,8 @@ TEST_CASE("FlatHashMap handles rehash gracefully") {
     }
 }
 
-TEST_CASE("FlatHashMap handles erase correctly") {
-    FlatHashMap<int, int> map;
+TEST_CASE("SwissMap handles erase correctly") {
+    ki::swiss_map<int, int> map;
     for (int i = 0; i < 100000; ++i) {
         auto* Pair = map.Emplace(i, i * 2);
         CHECK(Pair != nullptr);
@@ -52,8 +52,8 @@ TEST_CASE("FlatHashMap handles erase correctly") {
     }
 }
 
-TEST_CASE("FlatHashMap handles duplicate key insertion") {
-    FlatHashMap<int, int> map;
+TEST_CASE("SwissMap handles duplicate key insertion") {
+    ki::swiss_map<int, int> map;
     auto* slot1 = map.Emplace(42, 100);
     REQUIRE(slot1 != nullptr);
     CHECK(slot1->second == 100);
@@ -66,23 +66,23 @@ TEST_CASE("FlatHashMap handles duplicate key insertion") {
     CHECK(map.Size() == 1);
 }
 
-TEST_CASE("FlatHashMap erase on empty map does nothing") {
-    FlatHashMap<int, int> map;
+TEST_CASE("SwissMap erase on empty map does nothing") {
+    ki::swiss_map<int, int> map;
     map.Erase(42);
     CHECK(map.Size() == 0);
     CHECK(map.Find(42) == nullptr);
 }
 
-TEST_CASE("FlatHashMap erase missing key does nothing") {
-    FlatHashMap<int, int> map;
+TEST_CASE("SwissMap erase missing key does nothing") {
+    ki::swiss_map<int, int> map;
     map.Emplace(1, 10);
     map.Erase(999);
     CHECK(map.Size() == 1);
     CHECK(map.Find(1) != nullptr);
 }
 
-TEST_CASE("FlatHashMap rehash stability under high load") {
-    FlatHashMap<int, int> map;
+TEST_CASE("SwissMap rehash stability under high load") {
+    ki::swiss_map<int, int> map;
     const int N = 10000;
     for (int i = 0; i < N; ++i) {
         auto* slot = map.Emplace(i, i * 3);
@@ -109,12 +109,12 @@ TEST_CASE("FlatHashMap rehash stability under high load") {
     }
 }
 
-TEST_CASE("FlatHashMap move constructor") {
-    FlatHashMap<int, int> map1;
+TEST_CASE("SwissMap move constructor") {
+    ki::swiss_map<int, int> map1;
     map1.Emplace(1, 10);
     map1.Emplace(2, 20);
 
-    FlatHashMap<int, int> map2(std::move(map1));
+    ki::swiss_map<int, int> map2(std::move(map1));
     // Source is empty
     CHECK(map1.Size() == 0);
     CHECK(map2.Size() == 2);
@@ -122,12 +122,12 @@ TEST_CASE("FlatHashMap move constructor") {
     CHECK(map2.Find(2) != nullptr);
 }
 
-TEST_CASE("FlatHashMap move assignment") {
-    FlatHashMap<int, int> map1;
+TEST_CASE("SwissMap move assignment") {
+    ki::swiss_map<int, int> map1;
     map1.Emplace(1, 10);
     map1.Emplace(2, 20);
 
-    FlatHashMap<int, int> map2;
+    ki::swiss_map<int, int> map2;
     map2.Emplace(3, 30);
 
     map2 = std::move(map1);
@@ -140,11 +140,11 @@ TEST_CASE("FlatHashMap move assignment") {
 }
 
 // TODO: Add copy constructor
-/*TEST_CASE("FlatHashMap copy constructor") {
-    FlatHashMap<int, int> map1;
+/*TEST_CASE("SwissMap copy constructor") {
+    ki::swiss_map<int, int> map1;
     map1.Emplace(1, 10);
 
-    FlatHashMap<int, int> map2(map1);
+    ki::swiss_map<int, int> map2(map1);
     CHECK(map2.Size() == 1);
     CHECK(map2.Find(1) != nullptr);
     // Modify map1, ensure map2 unchanged
@@ -153,8 +153,8 @@ TEST_CASE("FlatHashMap move assignment") {
     CHECK(map2.Size() == 1);
 }*/
 
-TEST_CASE("FlatHashMap const find") {
-    FlatHashMap<int, int> map;
+TEST_CASE("SwissMap const find") {
+    ki::swiss_map<int, int> map;
     map.Emplace(1, 10);
     const auto& constMap = map;
     const auto* slot = constMap.Find(1);
@@ -165,8 +165,8 @@ TEST_CASE("FlatHashMap const find") {
 #include <random>
 #include <unordered_set>
 
-TEST_CASE("FlatHashMap random stress test") {
-    FlatHashMap<int, int> map;
+TEST_CASE("SwissMap random stress test") {
+    ki::swiss_map<int, int> map;
     std::unordered_set<int> keys;
     std::random_device rd;
     std::mt19937 gen(rd());
@@ -207,16 +207,16 @@ TEST_CASE("FlatHashMap random stress test") {
     CHECK(map.Size() == keys.size());
 }
 
-TEST_CASE("FlatHashMap with complex value type") {
-    FlatHashMap<int, std::string> map;
+TEST_CASE("SwissMap with complex value type") {
+    ki::swiss_map<int, std::string> map;
     map.Emplace(1, "hello");
     auto* slot = map.Find(1);
     REQUIRE(slot != nullptr);
     CHECK(*slot == "hello");
 }
 
-TEST_CASE("FlatHashMap iteration over elements") {
-    FlatHashMap<int, int> map;
+TEST_CASE("SwissMap iteration over elements") {
+    ki::swiss_map<int, int> map;
     map.Emplace(1, 10);
     map.Emplace(2, 20);
     int count = 0;
@@ -228,8 +228,8 @@ TEST_CASE("FlatHashMap iteration over elements") {
     CHECK(count == 2);
 }
 
-TEST_CASE("FlatHashMap clear removes all elements") {
-    FlatHashMap<int, int> map;
+TEST_CASE("SwissMap clear removes all elements") {
+    ki::swiss_map<int, int> map;
     map.Emplace(1, 10);
     map.Emplace(2, 20);
     map.Clear();
@@ -242,8 +242,8 @@ TEST_CASE("FlatHashMap clear removes all elements") {
     CHECK(map.Find(3) != nullptr);
 }
 
-TEST_CASE("FlatHashMap with move-only value type") {
-    FlatHashMap<int, std::unique_ptr<int>> map;
+TEST_CASE("SwissMap with move-only value type") {
+    ki::swiss_map<int, std::unique_ptr<int>> map;
     auto ptr = std::make_unique<int>(42);
     map.Emplace(1, std::move(ptr));
     auto* slot = map.Find(1);
